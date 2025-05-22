@@ -70,8 +70,11 @@ if focused_pid="$(niri msg --json focused-window | jq -e '.pid')"; then
   fi
 fi
 
-if [[ "$dir" == "up" || "$dir" == "down"]]; then
+case "$dir" in
+up | down)
   niri msg action focus-window-$dir
-else
+  ;;
+*)
   niri msg action focus-column-$dir
-fi
+  ;;
+esac
