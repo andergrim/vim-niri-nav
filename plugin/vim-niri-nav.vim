@@ -1,13 +1,14 @@
-" vim-sway-nav.vim -- Use sway's focus direction bindings to move between vim
+" vim-niri-nav.vim -- Use niri's focus direction bindings to move between vim
 " splits as well. Requires the accompanying helper script.
 "
+" Modified for niri from https://git.sr.ht/~jcc/vim-sway-nav
 " Inspired by https://github.com/christoomey/vim-tmux-navigator.
 
 let clientserver = has("nvim") || has("clientserver")
-if exists("g:loaded_vim_sway_nav") || empty($SWAYSOCK) || !clientserver
+if exists("g:loaded_vim_niri_nav") || empty($NIRI_SOCKET) || !clientserver
     finish
 endif
-let g:loaded_vim_sway_nav = 1
+let g:loaded_vim_niri_nav = 1
 
 function s:setup()
     " Ensure we are running a server.
@@ -17,13 +18,13 @@ function s:setup()
 
     " Create a file so the helper script knows how to send a command.
     let runtime_dir = empty($XDG_RUNTIME_DIR) ? "/tmp" : $XDG_RUNTIME_DIR
-    let s:servername_file = runtime_dir . "/vim-sway-nav." . getpid() . ".servername"
+    let s:servername_file = runtime_dir . "/vim-niri-nav." . getpid() . ".servername"
     let program = has("nvim") ? "nvim" : "vim"
     call writefile([program . " " . v:servername], s:servername_file)
 endfunction
 
 " Schedule setup and cleanup.
-augroup vim_sway_nav
+augroup vim_niri_nav
     autocmd!
     autocmd VimEnter * call s:setup()
     autocmd VimLeavePre * call delete(s:servername_file)
@@ -52,15 +53,16 @@ endif
 " Returns true if nav was handled within vim, false if the caller should
 " perform the nav itself. (Uses a string to avoid inconsistency in how
 " v:true/v:false are printed between nvim and vim.)
-function VimSwayNav(dir, caller_version = 0)
+function VimNiriNav(dir, caller_version = 0)
     if a:caller_version < 1
         call s:show_deprecation_warning()
     endif
 
     let l:dir_flag = get({"left": "h", "down": "j", "up": "k", "right": "l"}, a:dir)
+    let l:dir_comp = get({"left": "column", "down": "window", "up": "window", "right": "column"}, a:dir)
     if winnr(l:dir_flag) == winnr()
         if a:caller_version < 1
-            call s:job(["swaymsg", "focus", a:dir])
+            call s:job(["niri", "msg", "action", "focus-" . a:dir_comp . "-" . a:dir])
             return "true"
         else
             return "false"
@@ -78,7 +80,7 @@ function s:show_deprecation_warning()
     endif
 
     echohl WarningMsg
-    echom "You are using a deprecated version of the vim-sway-nav shell script. Please update by downloading the latest version."
+    echom "You are using a deprecated version of the vim-niri-nav shell script. Please update by downloading the latest version."
     echohl None
     let s:deprecation_warning_shown = v:true
 endfunction
