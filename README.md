@@ -4,8 +4,8 @@
 
 Seamless navigation between [niri](https://github.com/YaLTeR/niri) windows and (Neo)Vim splits with the same key bindings.
 
-This is a modified version of [jasoncarloscox.com/creations/vim-sway-nav](https://jasoncarloscox.com/creations/vim-sway-nav/) which
-in turn was Inspired by [vim-tmux-navigator](https://github.com/christoomey/vim-tmux-navigator).
+This is a modified version of [vim-sway-nav](https://jasoncarloscox.com/creations/vim-sway-nav/) which
+in turn was inspired by [vim-tmux-navigator](https://github.com/christoomey/vim-tmux-navigator).
 
 ## Requirements
 
