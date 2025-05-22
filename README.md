@@ -36,7 +36,7 @@ Mod+Up        { spawn "vim-niri-nav" "up"; }
 Mod+Right     { spawn "vim-niri-nav" "right"; }
 ```
 
-You can now use `$mod+<arrow>` to navigate among niri windows and Vim splits!
+You can now use `Mod+<arrow>` to navigate among niri windows and Vim splits!
 
 ## Configuration
 

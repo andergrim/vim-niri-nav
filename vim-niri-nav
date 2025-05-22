@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# vim-sway-nav - Use the same bindings to move focus between sway windows and
+# vim-niri-nav - Use the same bindings to move focus between niri windows and
 # vim splits. Requires the accompanying vim plugin.
 
 dir="$1"
-timeout="${VIM_SWAY_NAV_TIMEOUT:-0.1s}"
+timeout="${VIM_NIRI_NAV_TIMEOUT:-0.1s}"
 
 case "$dir" in
 up) ;;
@@ -60,11 +60,11 @@ vim_remote_expr() {
 if focused_pid="$(niri msg --json focused-window | jq -e '.pid')"; then
   terms="$(find /dev/pts -type c -not -name ptmx | sed s#^/dev/## | tr '\n' ,)"
   if vim_pid="$(get_descendant_vim_pid "$focused_pid" "$terms")"; then
-    servername_file="${XDG_RUNTIME_DIR:-/tmp}/vim-sway-nav.$vim_pid.servername"
+    servername_file="${XDG_RUNTIME_DIR:-/tmp}/vim-niri-nav.$vim_pid.servername"
     read -r program servername <"$servername_file"
 
     if [ -n "$servername" ]; then
-      did_nav_in_vim=$(vim_remote_expr "VimSwayNav('$dir', 1)")
+      did_nav_in_vim=$(vim_remote_expr "VimNiriNav('$dir', 1)")
       [ "$did_nav_in_vim" = "true" ] && exit 0
     fi
   fi
