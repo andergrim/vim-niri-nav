@@ -38,11 +38,28 @@ Mod+Right     { spawn "vim-niri-nav" "right"; }
 
 You can now use `Mod+<arrow>` to navigate among niri windows and Vim splits!
 
+
 ## Configuration
 
 The `vim-niri-nav` shell script applies a timeout to its communication with (Neo)Vim and falls back to normal `niri msg action focus-<type + direction>` commands if the timeout is exceeded. This is useful in cases where (Neo)Vim is blocked on some long-running operation and takes a long time to respond -- better to at least move to the adjacent niri window than to do nothing.
 
 The timeout is implemented using the [`timeout` program from the GNU coreutils](https://www.gnu.org/software/coreutils/timeout). If the `timeout` program is not available, no timeout will be applied. The default timeout is `0.1s` (1/10th of a second), but this can be overridden by setting the `VIM_NIRI_NAV_TIMEOUT` environment variable. Setting this variable to `0` will disable the timeout behavior, allowing (Neo)Vim to be as slow as it wants to be.
+
+### niri focus-window-or-workspace-[down|up] support
+
+If you want to use `focus-window-or-workspace-[down|up]` instead of `focus-window-[down|up]`:
+
+Set `g:vim_niri_nav_workspace` to `"true"` in your vim configuration:
+
+```
+let g:vim_niri_nav_workspace = "true"
+```
+
+Then, in your niri config add the `w` parameter to the `vim-niri-nav` command:
+
+```
+Mod+Down    { spawn "vim-niri-nav" "up" "w"; }
+```
 
 ## Contributing
 
