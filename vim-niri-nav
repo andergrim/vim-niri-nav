@@ -4,6 +4,13 @@
 # vim splits. Requires the accompanying vim plugin.
 
 dir="$1"
+if [ -n "$2" ]; then
+    if [ $2 = "w" ]; then
+        custom="or-workspace-"
+    else
+        custom=""
+    fi 
+fi
 timeout="${VIM_NIRI_NAV_TIMEOUT:-0.1s}"
 
 case "$dir" in
@@ -72,7 +79,7 @@ fi
 
 case "$dir" in
 up | down)
-  niri msg action focus-window-$dir
+  niri msg action focus-window-$custom$dir
   ;;
 *)
   niri msg action focus-column-$dir
