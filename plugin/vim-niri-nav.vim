@@ -60,10 +60,10 @@ function VimNiriNav(dir, caller_version = 0)
     " check if vim_niri_nav_workspace is set if not set it to false
     let g:vim_niri_nav_workspace = get(g:, 'vim_niri_nav_workspace', false) 
     let l:dir_flag = get({"left": "h", "down": "j", "up": "k", "right": "l"}, a:dir)
-    if g:workspace = false
+    if g:vim_niri_nav_workspace = false
         " default behaviour focus-window-[up|down]
         let l:dir_comp = get({"left": "column", "down": "window", "up": "window", "right": "column"}, a:dir)
-    elseif g:workspace = true
+    elseif g:vim_niri_nav_workspace = true
         " focus-window-or-workspace-[up|down]
         let l:dir_comp = get({"left": "column", "down": "window-or-workspace", "up": "window-or-workspace", "right": "column"}, a:dir)
     endif
