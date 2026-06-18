@@ -58,6 +58,15 @@ with_timeout() {
   fi
 }
 
+find_nvim_server() {
+  pid="$1"
+
+  for root in "${XDG_RUNTIME_DIR:-}" "${TMPDIR:-}/nvim.${USER:-}" "/tmp/nvim.${USER:-}"; do
+    [ -n "$root" ] && [ -d "$root" ] || continue
+    find "$root" -type s -name "nvim.$pid.*" -print 2>/dev/null | sed -n '1p'
+  done | sed -n '1p'
+}
+
 vim_remote_expr() {
   if [ "$program" = vim ]; then
     with_timeout vim --servername "$servername" --remote-expr "$@"
@@ -70,11 +79,33 @@ if focused_pid="$(niri msg --json focused-window | jq -e '.pid')"; then
   terms="$(find /dev/pts -type c -not -name ptmx | sed s#^/dev/## | tr '\n' ,)"
   if vim_pid="$(get_descendant_vim_pid "$focused_pid" "$terms")"; then
     servername_file="${XDG_RUNTIME_DIR:-/tmp}/vim-niri-nav.$vim_pid.servername"
-    read -r program servername <"$servername_file"
+    if [ -r "$servername_file" ]; then
+      read -r program servername <"$servername_file"
+    fi
 
     if [ -n "$servername" ]; then
-      did_nav_in_vim=$(vim_remote_expr "VimNiriNav('$dir', 1)")
-      [ "$did_nav_in_vim" = "true" ] && exit 0
+      did_nav_in_vim=$(vim_remote_expr "VimNiriNav('$dir', 1)" 2>/dev/null)
+      remote_status=$?
+      if [ "$remote_status" -eq 0 ]; then
+        [ "$did_nav_in_vim" = "true" ] && exit 0
+        [ "$did_nav_in_vim" = "false" ] && remote_status=0
+      fi
+    else
+      remote_status=1
+    fi
+
+    if [ "${remote_status:-1}" -ne 0 ] && [ "${program:-nvim}" = nvim ]; then
+      servername="$(find_nvim_server "$vim_pid")"
+      program=nvim
+
+      if [ -n "$servername" ]; then
+        did_nav_in_vim=$(vim_remote_expr "VimNiriNav('$dir', 1)" 2>/dev/null)
+        remote_status=$?
+        if [ "$remote_status" -eq 0 ]; then
+          printf '%s %s\n' "$program" "$servername" >"$servername_file" 2>/dev/null
+          [ "$did_nav_in_vim" = "true" ] && exit 0
+        fi
+      fi
     fi
   fi
 fi

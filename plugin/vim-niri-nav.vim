@@ -43,6 +43,10 @@ augroup vim_niri_nav
     autocmd VimLeavePre * call s:cleanup()
 augroup END
 
+if get(v:, "vim_did_enter", 0)
+    call s:setup()
+endif
+
 " Do some shenanigans to be compatible with jobs in vim and nvim (jobs are
 " used instead of system() to avoid starting a shell and running potentially
 " slow shell initialization files).
