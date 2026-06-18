@@ -15,15 +15,23 @@ let g:loaded_vim_niri_nav = 1
 
 function s:setup()
     " Ensure we are running a server.
-    if empty(v:servername) && !has("nvim")
-        call remote_startserver($'{rand()}')
+    if has("nvim")
+        let servername = v:servername
+        if empty(servername) || index(serverlist(), servername) < 0
+            let servername = serverstart()
+        endif
+    else
+        if empty(v:servername)
+            call remote_startserver($'{rand()}')
+        endif
+        let servername = v:servername
     endif
 
     " Create a file so the helper script knows how to send a command.
     let runtime_dir = empty($XDG_RUNTIME_DIR) ? "/tmp" : $XDG_RUNTIME_DIR
     let s:servername_file = runtime_dir . "/vim-niri-nav." . getpid() . ".servername"
     let program = has("nvim") ? "nvim" : "vim"
-    call writefile([program . " " . v:servername], s:servername_file)
+    call writefile([program . " " . servername], s:servername_file)
 endfunction
 
 function s:cleanup()
@@ -35,6 +43,17 @@ function s:cleanup()
     " be sourced again so it can recreate the servername file after restart.
     unlet! g:loaded_vim_niri_nav
 endfunction
+
+function s:debug()
+    echom "vim-niri-nav pid: " . getpid()
+    echom "vim-niri-nav servername file: " . get(s:, "servername_file", "<unset>")
+    echom "vim-niri-nav v:servername: " . v:servername
+    if has("nvim")
+        echom "vim-niri-nav serverlist: " . string(serverlist())
+    endif
+endfunction
+
+command! VimNiriNavDebug call s:debug()
 
 " Schedule setup and cleanup.
 augroup vim_niri_nav
