@@ -5,6 +5,9 @@
 " Inspired by https://github.com/christoomey/vim-tmux-navigator.
 
 let clientserver = has("nvim") || has("clientserver")
+if exists("g:loaded_vim_niri_nav") && !exists("#vim_niri_nav#VimEnter")
+    unlet g:loaded_vim_niri_nav
+endif
 if exists("g:loaded_vim_niri_nav") || empty($NIRI_SOCKET) || !clientserver
     finish
 endif
@@ -23,11 +26,21 @@ function s:setup()
     call writefile([program . " " . v:servername], s:servername_file)
 endfunction
 
+function s:cleanup()
+    if exists("s:servername_file")
+        call delete(s:servername_file)
+    endif
+
+    " Neovim's :restart can preserve global variables. Allow this plugin to
+    " be sourced again so it can recreate the servername file after restart.
+    unlet! g:loaded_vim_niri_nav
+endfunction
+
 " Schedule setup and cleanup.
 augroup vim_niri_nav
     autocmd!
     autocmd VimEnter * call s:setup()
-    autocmd VimLeavePre * call delete(s:servername_file)
+    autocmd VimLeavePre * call s:cleanup()
 augroup END
 
 " Do some shenanigans to be compatible with jobs in vim and nvim (jobs are
@@ -53,7 +66,7 @@ endif
 " Returns true if nav was handled within vim, false if the caller should
 " perform the nav itself. (Uses a string to avoid inconsistency in how
 " v:true/v:false are printed between nvim and vim.)
-function VimNiriNav(dir, caller_version = 0)
+function! VimNiriNav(dir, caller_version = 0)
     if a:caller_version < 1
         call s:show_deprecation_warning()
     endif
