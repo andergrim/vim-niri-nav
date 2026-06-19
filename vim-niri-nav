@@ -26,28 +26,51 @@ left) ;;
   ;;
 esac
 
-get_descendant_vim_pid() {
+get_descendant_pids() {
   pid="$1"
-  terms="$2"
+  echo "$pid"
 
-  if grep -iqE '^g?(view|n?vim?x?)(diff)?$' "/proc/$pid/comm"; then
-    if embed_pid="$(pgrep --parent "$pid" --full 'nvim --embed')"; then
-      echo "$embed_pid"
-    else
+  for child in $(pgrep --parent "$pid"); do
+    get_descendant_pids "$child"
+  done
+}
+
+get_tree_ttys() {
+  for pid in "$@"; do
+    tty="$(readlink "/proc/$pid/fd/0" 2>/dev/null || true)"
+    case "$tty" in
+    /dev/pts/* | /dev/tty*) echo "$tty" ;;
+    esac
+  done | sort -u
+}
+
+pid_has_tty() {
+  pid="$1"
+  ttys="$2"
+  tty="$(readlink "/proc/$pid/fd/0" 2>/dev/null || true)"
+  [ -n "$tty" ] && printf '%s\n' "$ttys" | grep -Fxq "$tty"
+}
+
+get_vim_candidate_pids() {
+  tree_pids="$1"
+  ttys="$2"
+
+  for pid in $tree_pids; do
+    if grep -iqE '^g?(view|n?vim?x?)(diff)?$' "/proc/$pid/comm"; then
+      if embed_pid="$(pgrep --parent "$pid" --full 'nvim --embed')"; then
+        echo "$embed_pid"
+      fi
       echo "$pid"
-    fi
-
-    return 0
-  fi
-
-  for child in $(pgrep --runstates D,I,R,S --terminal "$terms" --parent "$pid"); do
-    if get_descendant_vim_pid "$child" "$terms"; then
-      # already echo'd PID in recursive call
-      return 0
     fi
   done
 
-  return 1
+  for servername_file in "${XDG_RUNTIME_DIR:-/tmp}"/vim-niri-nav.*.servername; do
+    [ -e "$servername_file" ] || continue
+    pid="${servername_file##*/vim-niri-nav.}"
+    pid="${pid%.servername}"
+    [ -d "/proc/$pid" ] || continue
+    pid_has_tty "$pid" "$ttys" && echo "$pid"
+  done
 }
 
 with_timeout() {
@@ -71,13 +94,18 @@ vim_remote_expr() {
   if [ "$program" = vim ]; then
     with_timeout vim --servername "$servername" --remote-expr "$@"
   elif [ "$program" = nvim ]; then
-    with_timeout nvim --headless --server "$servername" --remote-expr "$@"
+    with_timeout nvim --clean --headless --server "$servername" --remote-expr "$@"
   fi
 }
 
 if focused_pid="$(niri msg --json focused-window | jq -e '.pid')"; then
-  terms="$(find /dev/pts -type c -not -name ptmx | sed s#^/dev/## | tr '\n' ,)"
-  if vim_pid="$(get_descendant_vim_pid "$focused_pid" "$terms")"; then
+  tree_pids="$(get_descendant_pids "$focused_pid")"
+  tree_ttys="$(get_tree_ttys $tree_pids)"
+
+  for vim_pid in $(get_vim_candidate_pids "$tree_pids" "$tree_ttys" | sort -u); do
+    program=
+    servername=
+    remote_status=1
     servername_file="${XDG_RUNTIME_DIR:-/tmp}/vim-niri-nav.$vim_pid.servername"
     if [ -r "$servername_file" ]; then
       read -r program servername <"$servername_file"
@@ -88,10 +116,8 @@ if focused_pid="$(niri msg --json focused-window | jq -e '.pid')"; then
       remote_status=$?
       if [ "$remote_status" -eq 0 ]; then
         [ "$did_nav_in_vim" = "true" ] && exit 0
-        [ "$did_nav_in_vim" = "false" ] && remote_status=0
+        [ "$did_nav_in_vim" = "false" ] && break
       fi
-    else
-      remote_status=1
     fi
 
     if [ "${remote_status:-1}" -ne 0 ] && [ "${program:-nvim}" = nvim ]; then
@@ -104,10 +130,11 @@ if focused_pid="$(niri msg --json focused-window | jq -e '.pid')"; then
         if [ "$remote_status" -eq 0 ]; then
           printf '%s %s\n' "$program" "$servername" >"$servername_file" 2>/dev/null
           [ "$did_nav_in_vim" = "true" ] && exit 0
+          [ "$did_nav_in_vim" = "false" ] && break
         fi
       fi
     fi
-  fi
+  done
 fi
 
 case "$dir" in

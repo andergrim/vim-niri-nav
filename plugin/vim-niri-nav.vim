@@ -44,17 +44,6 @@ function s:cleanup()
     unlet! g:loaded_vim_niri_nav
 endfunction
 
-function s:debug()
-    echom "vim-niri-nav pid: " . getpid()
-    echom "vim-niri-nav servername file: " . get(s:, "servername_file", "<unset>")
-    echom "vim-niri-nav v:servername: " . v:servername
-    if has("nvim")
-        echom "vim-niri-nav serverlist: " . string(serverlist())
-    endif
-endfunction
-
-command! VimNiriNavDebug call s:debug()
-
 " Schedule setup and cleanup.
 augroup vim_niri_nav
     autocmd!
@@ -94,7 +83,7 @@ function! VimNiriNav(dir, caller_version = 0)
         call s:show_deprecation_warning()
     endif
     " check if vim_niri_nav_workspace is set if not set it to false
-    let g:vim_niri_nav_workspace = get(g:, "vim_niri_nav_workspace", "false") 
+    let g:vim_niri_nav_workspace = get(g:, "vim_niri_nav_workspace", "false")
     let l:dir_flag = get({"left": "h", "down": "j", "up": "k", "right": "l"}, a:dir)
     if g:vim_niri_nav_workspace == "false"
         " default behaviour focus-window-[up|down]
