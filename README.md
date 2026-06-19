@@ -38,6 +38,21 @@ Mod+Right     { spawn "vim-niri-nav" "right"; }
 
 You can now use `Mod+<arrow>` to navigate among niri windows and Vim splits!
 
+### Optional C helper
+
+The shell script remains the default helper and can be used as a fallback. For a faster helper, build the C port:
+
+```
+make
+```
+
+The binary is created at `build/vim-niri-nav`. To install it without replacing the shell script:
+
+```
+make install PREFIX=~/.local
+```
+
+This installs `vim-niri-nav-bin`; use that name in your niri bindings if you want the C helper.
 
 ## Configuration
 
